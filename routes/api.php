@@ -1,23 +1,26 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SearchController;
+use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\HotelsController;
+use App\Http\Controllers\Api\HubController;
+use App\Http\Controllers\Api\HotelLegsConnectorController;
 
-/**
- * Ruta protegida por autenticación API
- */
-Route::middleware(['auth:api'])->get('/api/user', function (Request $request) {
-    return $request->user();
+use Laravel\Sanctum\Sanctum;
+
+Route::get('/hub/search', [HubController::class, 'search']);
+Route::get('/hotel-legs/search', [HotelLegsConnectorController::class, 'search']);
+
+Route::get('/test', function () {
+    return response()->json([
+        'message' => 'Prueba exitosa',
+        'data' => 'Hola desde la ruta de prueba',
+    ]);
 });
 
-/**
- * Ruta pública para búsqueda
- */
-Route::get('/api/search', [SearchController::class, 'index']);
+Route::get('/hotels', [HotelsController::class, 'index']);
 
-/**
- * Ruta de prueba para API
- */
-Route::get('/api/test', function () {
-    return 'API Test';
-});
+Route::get('/search', [SearchController::class, 'search']);
+
+
