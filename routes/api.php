@@ -9,9 +9,6 @@ use App\Http\Controllers\Api\HotelLegsConnectorController;
 
 use Laravel\Sanctum\Sanctum;
 
-Route::get('/hub/search', [HubController::class, 'search']);
-Route::get('/hotel-legs/search', [HotelLegsConnectorController::class, 'search']);
-
 Route::get('/test', function () {
     return response()->json([
         'message' => 'Prueba exitosa',
@@ -19,8 +16,12 @@ Route::get('/test', function () {
     ]);
 });
 
+Route::get('/hotel-legs/search', [HotelLegsConnectorController::class, 'search']);
+
 Route::get('/hotels', [HotelsController::class, 'index']);
 
-Route::get('/search', [SearchController::class, 'search']);
+Route::post('/hub/search', [HubController::class, 'search']);
+
+
 
 

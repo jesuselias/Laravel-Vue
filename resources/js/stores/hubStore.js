@@ -1,8 +1,6 @@
-// resources/js/stores/hubStore.js
 import { defineStore } from 'pinia'
 
-export const useHubStore = defineStore({
-  id: 'hub',
+export const useHubStore = defineStore('hub', {
   state: () => ({
     results: []
   }),
@@ -11,28 +9,25 @@ export const useHubStore = defineStore({
   },
   actions: {
     setSearchResults(results) {
-      this.results = results;
+      this.results = results
     },
 
-    // Otras acciones que necesites
-    addResult(result) {
-      this.results.push(result);
-    },
-
-    removeResult(index) {
-      this.results.splice(index, 1);
-    },
-
-    // Ejemplo de acción asíncrona
-    async fetchResults() {
-      // Simulando una API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Actualizando el estado
-      this.setSearchResults([
-        { roomId: 1, rates: [{ mealPlanId: 'MP1', price: 10.99, isCancellable: true }] },
-        { roomId: 2, rates: [{ mealPlanId: 'MP2', price: 15.50, isCancellable: false }] },
-      ]);
+    async fetchResults(searchData) {
+      try {
+        const response = await fetch('/api/hub/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchData),
+        })
+        const data = await response.json()
+        this.setSearchResults(data.rooms)
+      } catch (error) {
+        console.error('Error fetching results:', error)
+        throw new Error('Failed to fetch results')
+      }
     }
   }
 })
+

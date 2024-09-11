@@ -2,49 +2,137 @@
 
 namespace App\Services;
 
-use App\Connectors\HotelLegsConnector;
-use Illuminate\Support\Collection;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+use App\Models\RoomType;
+use App\Models\MealPlan;
+use App\Models\RoomRate;
+
+use Illuminate\Http\Request;
+
 
 class HubService
 {
-    private $connectors;
+  
 
-    public function __construct(HotelLegsConnector $hotelLegsConnector)
+    public function search($input)
     {
-        $this->connectors = [$hotelLegsConnector];
+        if ($input instanceof Request) {
+            $data = $input->all();
+        } else {
+            $data = $input;
+        }
+    
+        // Convertir fechas a formato ISO 8601
+        if (isset($data['checkIn'])) {
+            $data['checkIn'] = Carbon::parse($data['checkIn'])->format('Y-m-d');
+        }
+        if (isset($data['checkOut'])) {
+            $data['checkOut'] = Carbon::parse($data['checkOut'])->format('Y-m-d');
+        }
+    
+        // Resto del código...
+        $result = $this->getHotelLegsData(
+            $data['hotelId'],
+            $data['checkIn'],
+            $data['checkOut'],
+            $data['numberOfGuests'],
+            $data['numberOfRooms'],
+            $data['currency']
+        );
+    
+        return [
+            'rooms' => $result
+        ];
     }
 
-    public function search(array $searchCriteria): Collection
+    private function validateInput(array $data): array
     {
-        \Log::info('Starting search with criteria:', [$searchCriteria]);
+        return [
+            'hotelId' => intval($data['hotelId']),
+            'checkIn' => Carbon::parse($data['checkIn'])->format('Y-m-d'),
+            'checkOut' => Carbon::parse($data['checkOut'])->format('Y-m-d'),
+            'numberOfGuests' => intval($data['numberOfGuests']),
+            'numberOfRooms' => intval($data['numberOfRooms']),
+            'currency' => strtoupper($data['currency'])
+        ];
+    }
+    
+public function getHotelLegsData($hotelId, $checkIn, $checkOut, $guests, $rooms, $currency): array
+{
+    // Validar fechas
+    $checkIn = Carbon::parse($checkIn)->format('Y-m-d');
+    $checkOut = Carbon::parse($checkOut)->format('Y-m-d');
 
-        $results = collect();
+    if (!$checkIn || !$checkOut) {
+        throw new \InvalidArgumentException("Las fechas de check-in y check-out deben ser válidas.");
+    }
 
-        foreach ($this->connectors as $connector) {
-            \Log::info('Calling connector:', ['connector' => get_class($connector)]);
-            
-            try {
-                $connectorResults = $connector->search($searchCriteria);
-                \Log::info('Received results from connector:', [$connectorResults]);
+    // Obtener los tipos de habitación disponibles para este hotel
+    $roomTypes = RoomType::where('hotel_id', $hotelId)->get();
 
-                $results = $results->merge(collect($connectorResults));
-            } catch (\Exception $e) {
-                \Log::error('Error calling connector', [$e]);
-            }
+    // Obtener todos los planes de comida disponibles
+    $mealPlans = MealPlan::pluck('id', 'name');
+
+    // Filtrar los tipos de habitación según la selección
+    $filteredRoomTypes = $roomTypes->filter(function ($roomType) use ($guests, $rooms) {
+        return true; // Simplemente devuelve todos los resultados por ahora
+    });
+
+    return $filteredRoomTypes->map(function ($roomType) use ($mealPlans, $checkIn, $checkOut) {
+        $roomRates = RoomRate::where('room_id', $roomType->id)
+            ->whereBetween('check_in_date', [$checkIn, $checkOut])
+            ->whereBetween('check_out_date', [$checkIn, $checkOut])
+            ->get();
+
+        $rates = [];
+        foreach ($roomRates as $rate) {
+            $mealPlanId = MealPlan::where('id', $rate->meal_plan_id)->first()->id ?? null;
+            $mealPlanName = $mealPlanId !== null ? MealPlan::find($mealPlanId)->name : 'No plan selected';
+
+            $rates[] = [
+                'mealPlanId' => $mealPlanId,
+                'isCancellable' => $rate->is_cancellable,
+                'price' => floatval($rate->price),
+            ];
         }
 
-        \Log::info('Consolidating results');
-        $consolidatedResults = $this->consolidateResults($results);
-
-        \Log::info('Final consolidated results:', [$consolidatedResults]);
-
-        return $consolidatedResults;
+        return [
+            'roomId' => $roomType->id,
+            'rates' => $rates
+        ];
+    })->all();
     }
 
-    private function consolidateResults(Collection $results): Collection
+        
+    private function translateHotelLegsResponse(array $response): array
     {
-        // Implementa la lógica para consolidar los resultados de múltiples proveedores
-        // Por ejemplo, puedes agrupar por hotel, calcular promedios, etc.
-        return $results;
+        $translatedResponse = [];
+        foreach ($response as $item) {
+            $roomTypeName = RoomType::find($item['roomId'])->name ?? 'Unknown';
+            $mealPlan = MealPlan::find($item['mealPlanId']);
+            $mealPlanId = $mealPlan ? $mealPlan->id : null;
+
+            $translatedItem = [
+                'roomId' => $roomTypeName,
+                'rates' => []
+            ];
+
+            foreach ($item['rates'] as $rate) {
+                $translatedItem['rates'][] = [
+                    'mealPlanId' => $mealPlanId,
+                    'isCancellable' => $rate['isCancellable'],
+                    'price' => $rate['price']
+                ];
+            }
+
+            $translatedResponse[] = $translatedItem;
+        }
+
+        return ['rooms' => $translatedResponse];
     }
 }

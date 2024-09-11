@@ -21,7 +21,15 @@ return new class extends Migration
             $table->unsignedInteger('meal_plan_id');
             $table->boolean('is_cancellable');
             $table->decimal('price', 10, 2);
+            $table->date('check_in_date')->nullable();
+            $table->date('check_out_date')->nullable();
             $table->timestamps();
+
+            // Agregar índice único para evitar duplicados
+            $table->unique(['hotel_id', 'room_id', 'meal_plan_id']);
+
+            // Agregar índice para optimizar consultas por hotel_id y room_id
+            $table->index(['hotel_id', 'room_id']);
         });
     }
 

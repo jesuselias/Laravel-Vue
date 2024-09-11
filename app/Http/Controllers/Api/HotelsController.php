@@ -4,16 +4,22 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Models\Hotel;
+use \App\Http\Controllers\Controller;
 
-class HotelsController extends \App\Http\Controllers\Controller
+class HotelsController extends Controller
 {
     public function index()
     {
-        $hotels = Hotel::all();
+        $hotels = Hotel::orderBy('id')->get();
 
         return response()->json([
             'message' => 'Lista de hoteles',
-            'data' => $hotels->pluck('name')->toArray(),
+            'data' => $hotels->map(function ($hotel) {
+                return [
+                    'id' => $hotel->id,
+                    'name' => $hotel->name,
+                ];
+            })
         ], 200);
     }
 }
