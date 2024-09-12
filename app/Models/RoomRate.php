@@ -17,11 +17,13 @@ class RoomRate extends Model
         'currency',
         'check_in_date',
         'check_out_date',
+        'number_of_nights'
     ];
 
     protected $casts = [
         'price' => 'float',
-        'currency' => 'string', // Agregamos currency aquí
+        'currency' => 'string',
+        'number_of_nights' => 'integer'
     ];
 
     public function hotel()

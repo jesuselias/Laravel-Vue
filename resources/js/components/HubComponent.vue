@@ -1,19 +1,19 @@
 <template>
   <div id="hub-component">
     <div class="title-container">
-      <h1>HUB de Moonhotels</h1>
+      <h1>HUB</h1>
     </div>
     <form @submit.prevent="handleSubmit" class="search-form">
       <div class="form-group">
-        <label for="hotelId">ID del hotel:</label>
+        <label for="hotelId">Hotel ID:</label>
         <input v-model="searchParams.hotelId" type="text" placeholder="ID del hotel" required>
         <label for="checkIn">Date from:</label>
         <input v-model="searchParams.checkIn" type="date" required>
         <label for="checkOut">Date to:</label>
         <input v-model="searchParams.checkOut" type="date" required>
-        <label for="guests">Maximum number of guests:</label>
+        <label for="guests">number of guests:</label>
         <input v-model.number="searchParams.numberOfGuests" type="number" min="1" max="10" required>
-        <label for="rooms">Maximum number of rooms:</label>
+        <label for="rooms">number of rooms:</label>
         <input v-model.number="searchParams.numberOfRooms" type="number" min="1" max="10" required>
         <label for="currency">Currency:</label>
         <select v-model="searchParams.currency">
@@ -22,7 +22,7 @@
           <option value="GBP">GBP</option>
         </select>
         <div class="form-button">
-          <button type="submit">Buscar</button>
+          <button type="submit">Search</button>
         </div>
       </div>
     </form>
@@ -162,6 +162,7 @@ h1 {
 
 .form-group input, .form-group select {
   width: 9%;
+  height: 25px;
 }
 
 .form-group input:focus, .form-group select:focus {

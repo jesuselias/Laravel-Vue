@@ -11,12 +11,13 @@ use Carbon\Carbon;
 use App\Models\RoomType;
 use App\Models\MealPlan;
 use App\Models\RoomRate;
+use Illuminate\Http\Request;
 
 class HotelLegsConnector
 {
     public function search($input)
     {
-        if ($input instanceof \Illuminate\Http\Request) {
+        if ($input instanceof Request) {
             $data = $input->all();
         } else {
             $data = $input;
@@ -37,9 +38,7 @@ class HotelLegsConnector
             $data['currency']
         );
     
-        return [
-            'results' => $result
-        ];
+        return $result;
     }
 
     private function validateInput(array $data): array
@@ -67,34 +66,32 @@ class HotelLegsConnector
         // Obtener todos los planes de comida disponibles
         $mealPlans = MealPlan::pluck('id', 'name');
 
-        // Filtrar los tipos de habitación según la selección
         $filteredRoomTypes = $roomTypes->filter(function ($roomType) use ($guests, $rooms) {
-            return true; // Simplemente devuelve todos los resultados por ahora
+            return $roomType->max_guests >= $guests && $roomType->max_rooms >= $rooms;
         });
+        
 
-        return $filteredRoomTypes->map(function ($roomType) use ($mealPlans, $checkInDate, $guests, $rooms) {
+        return $filteredRoomTypes->map(function ($roomType) use ($checkInDate, $currency, $numberOfNights) {
             $roomRates = RoomRate::where('room_id', $roomType->id)
-                ->whereBetween('check_in_date', [$checkInDate, Carbon::parse($checkInDate)->addDays($numberOfNights - 1)])
+                ->where('check_in_date', '>=', $checkInDate)
+                ->where('number_of_nights', '>=', $numberOfNights)
+                ->where('currency', $currency)
+                ->orderBy('price')
                 ->get();
-
-            $rates = [];
-            foreach ($roomRates as $rate) {
-                $mealPlanId = $rate->meal_plan_id ?? null;
-                $mealPlanName = $mealPlanId !== null ? MealPlan::find($mealPlanId)->name : 'No plan selected';
-
-                $rates[] = [
-                    'mealPlanId' => $mealPlanId,
-                    'isCancellable' => $rate->is_cancellable,
-                    'price' => floatval($rate->price),
+    
+            if ($roomRates->isNotEmpty()) {
+                $lastRate = $roomRates->last();
+                $mealPlanId = MealPlan::find($lastRate->meal_plan_id)->id ?? null;
+                
+                return [
+                    'room' => $roomType->id,
+                    'meal' => $mealPlanId,
+                    'canCancel' => $lastRate->is_cancellable,
+                    'price' => floatval($lastRate->price),
                 ];
+            } else {
+                return null; // Devuelve null si no se encuentra ninguna tarifa válida
             }
-
-            return [
-                'room' => $roomType->id,
-                'meal' => $mealPlanId,
-                'canCancel' => $rate->is_cancellable,
-                'price' => floatval($rate->price),
-            ];
-        })->all();
-    }
+        })->filter()->values()->all();
+    } 
 }
