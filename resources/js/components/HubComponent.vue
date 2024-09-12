@@ -1,88 +1,267 @@
 <template>
-  <div class="container">
-    <h1>HUB Results</h1>
-    <ul v-if="hubStore.getResults.length > 0" class="results-list">
-      <li v-for="result in hubStore.getResults" :key="result.roomId" class="result-item">
-        <h2>Room {{ result.roomId }}</h2>
-        <ul class="rates-list">
-          <li v-for="rate in result.rates" :key="rate.mealPlanId" class="rate-item">
-            <p><strong>Meal Plan:</strong> {{ rate.mealPlanId }}</p>
-            <p><strong>Price:</strong> €{{ rate.price.toFixed(2) }}</p>
-            <p><strong>Cancellable:</strong> {{ rate.isCancellable ? 'Yes' : 'No' }}</p>
-          </li>
-        </ul>
-      </li>
-    </ul>
-    <p v-else>No hay resultados disponibles.</p>
+  <div id="hub-component">
+    <div class="title-container">
+      <h1>HUB de Moonhotels</h1>
+    </div>
+    <form @submit.prevent="handleSubmit" class="search-form">
+      <div class="form-group">
+        <label for="hotelId">ID del hotel:</label>
+        <input v-model="searchParams.hotelId" type="text" placeholder="ID del hotel" required>
+        <label for="checkIn">Date from:</label>
+        <input v-model="searchParams.checkIn" type="date" required>
+        <label for="checkOut">Date to:</label>
+        <input v-model="searchParams.checkOut" type="date" required>
+        <label for="guests">Número de huéspedes:</label>
+        <input v-model.number="searchParams.numberOfGuests" type="number" min="1" max="10" required>
+        <label for="rooms">Número de habitaciones:</label>
+        <input v-model.number="searchParams.numberOfRooms" type="number" min="1" max="10" required>
+        <label for="currency">Moneda:</label>
+        <select v-model="searchParams.currency">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="GBP">GBP</option>
+        </select>
+        <div class="form-button">
+          <button type="submit">Buscar</button>
+        </div>
+      </div>
+    </form>
+    <div v-if="showResults" class="results-container">
+      <h2>HUB Results</h2>
+      <h2>Rooms:</h2>
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>Room ID</th>
+            <th>Meal Plan</th>
+            <th>Price</th>
+            <th>Cancellable</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(room, index) in paginatedResults" :key="index">
+            <td>{{ room.roomId }}</td>
+            <td>{{ room.mealPlanId }}</td>
+            <td>{{ room.price }}</td>
+            <td>{{ room.isCancellable }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination-controls">
+        <button @click="prevPage" :disabled="currentPage === 1">&laquo;</button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+        <button @click="nextPage" :disabled="currentPage === totalPages">&raquo;</button>
+      </div>
+    </div>
+    <div v-else class="no-results">
+      <p>No hay resultados disponibles.</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { useHubStore } from '../stores/hubStore.js'
+import { ref, computed } from 'vue'
+import axios from 'axios'
 
-const hubStore = useHubStore()
+const searchParams = ref({
+  hotelId: '',
+  checkIn: '',
+  checkOut: '',
+  numberOfGuests: 1,
+  numberOfRooms: 1,
+  currency: 'EUR'
+})
+
+const currentPage = ref(1)
+const itemsPerPage = ref(2)
+const totalPages = computed(() => Math.ceil(processedData.value.length / itemsPerPage.value))
+
+const paginatedResults = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return processedData.value.slice(start, end)
+})
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const processedData = ref([])
+
+const showResults = ref(false)
+
+const handleSubmit = async () => {
+  console.log('Formulario enviado:', searchParams.value)
+
+  try {
+    const response = await axios.post('http://localhost:8000/api/hub/search', searchParams.value)
+    
+    if (response.data.success) {
+      console.log('Resultado de búsqueda:', response.data.data)
+      console.log('Resultado de búsqueda rooms:', response.data.data.rooms)
+      
+      // Procesa los datos
+      processedData.value = response.data.data.rooms.map(room => ({
+        roomId: room.roomId,
+        mealPlanId: room.rates[0]?.mealPlanId || 'N/A',
+        price: room.rates[0]?.price?.toFixed(2) || 'N/A',
+        isCancellable: room.rates[0]?.isCancellable === undefined ? 'N/A' : room.rates[0].isCancellable ? 'Yes' : 'No'
+      }))
+      showResults.value = true
+    } else {
+      throw new Error(`Error en la búsqueda: ${response.data.message}`)
+    }
+  } catch (error) {
+    console.error('Error al procesar el resultado de búsqueda:', error.message)
+    alert('Ocurrió un error al buscar. Por favor, inténtalo de nuevo.')
+  }
+
+}
 </script>
 
 <style scoped>
-.container {
-  max-width: 800px;
+#hub-component {
+  max-width: 90%;
   margin: 0 auto;
-  padding: 20px;
+  padding: 7px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.title-container {
+  display: flex;
+  justify-content: left;
 }
 
 h1 {
-  color: #333;
   font-size: 24px;
+  color: #333;
+}
+
+.search-form {
   margin-bottom: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.form-group label {
+  width: 8%;
+}
+
+.form-group input, .form-group select {
+  width: 9%;
+}
+
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0,123,255,.2);
+}
+
+.form-button {
+  width: 50%;
+  height: 30%;
+}
+
+button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 7px;
+  margin-right: auto;
+}
+
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+.results-container {
+  margin-top: 20px;
+}
+
+.table-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  width: 10%;
+}
+
+.results-table {
+  display: inline-flex;
+  flex-direction: column;
+  width: 80%;
+  border-collapse: separate;
+  border-spacing: 0 2ch;
+  border: 1px solid #000000;
+  margin-left: 10%;
+
+}
+
+.results-table thead tr,
+.results-table tbody tr {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px solid #ccc; 
+}
+
+.results-table th,
+.results-table td {
+  width: 25%; 
+  text-align: center;
+  border-right: 1px solid #ccc;
+}
+
+.no-results {
+  text-align: center;
+  margin-top: 20px;
+  border: 1px solid #ccc; 
+  padding: 10px;
+  border-radius: 4px;
 }
 
 .results-list {
   list-style-type: none;
-  padding: 0;
+  padding-left: 0;
 }
 
 .result-item {
+  margin-bottom: 15px;
+  padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
-  margin-bottom: 20px;
-  padding: 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h2 {
-  color: #007bff;
-  margin-top: 0;
-}
-
-.rates-list {
-  list-style-type: none;
-  padding: 0;
 }
 
 .rate-item {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  margin-bottom: 5px;
 }
 
-.rate-item:last-child {
-  border-bottom: none;
+.no-results {
+  text-align: center;
+  margin-top: 20px;
 }
 
-strong {
-  color: #0066cc;
+.pagination-controls {
+  margin-top: 20px;
+  text-align: center;
 }
-
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
-  }
-
-  h1 {
-    font-size: 18px;
-  }
-
-  .result-item {
-    padding: 10px;
-  }
+.pagination-controls button {
+  margin: 0 5px;
 }
 </style>

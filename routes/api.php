@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\HotelsController;
 use App\Http\Controllers\Api\HubController;
-use App\Http\Controllers\Api\HotelLegsConnectorController;
+use App\Http\Controllers\Api\HotelLegsController;
 
 use Laravel\Sanctum\Sanctum;
 
@@ -16,7 +16,7 @@ Route::get('/test', function () {
     ]);
 });
 
-Route::get('/hotel-legs/search', [HotelLegsConnectorController::class, 'search']);
+Route::post('/hotel-legs/search', [HotelLegsController::class, 'search']);
 
 Route::get('/hotels', [HotelsController::class, 'index']);
 

@@ -88,6 +88,7 @@ public function getHotelLegsData($hotelId, $checkIn, $checkOut, $guests, $rooms,
             ->whereBetween('check_in_date', [$checkIn, $checkOut])
             ->whereBetween('check_out_date', [$checkIn, $checkOut])
             ->get();
+            
 
         $rates = [];
         foreach ($roomRates as $rate) {

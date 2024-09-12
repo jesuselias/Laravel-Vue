@@ -1,29 +1,28 @@
-<!-- App.vue -->
 <template>
-    <div id="app">
-      <h1>HUB de Moonhotels</h1>
-      <SearchForm @search-result="handleSearchResult" />
-      <ResultsList :results="results" />
+  <div id="app">
+    <div class="title">
+      <h1>Moonhotels</h1>
     </div>
-  </template>
-  
-  <script setup>
-  import SearchForm from '../components/SearchForm.vue';
-  import ResultsList from '../components/ResultsList.vue';
-  import { ref } from 'vue';
-  
-  const results = ref([]);
-  
-  const handleSearchResult = (result) => {
-    try {
-      if (Array.isArray(result)) {
-        results.value = result;
-      } else {
-        console.error('Resultado de búsqueda inválido');
-      }
-    } catch (error) {
-      console.error('Error al procesar el resultado de búsqueda:', error);
-    }
-  };
-  </script>
-  
+    <HubComponent />
+  </div>
+</template>
+
+<script setup>
+import HubComponent from './HubComponent.vue';
+</script>
+
+<style scoped>
+#app {
+  max-width: 100%; /* Ajusta según tus preferencias */
+  margin: 0 auto;
+}
+
+.title {
+  text-align: center;
+}
+
+h1 {
+  font-size: 36px; /* Ajusta según tus preferencias */
+  color: #333; /* Ajusta según tus preferencias */
+}
+</style>
