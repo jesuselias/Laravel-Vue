@@ -13,7 +13,7 @@ import HubComponent from './HubComponent.vue';
 
 <style scoped>
 #app {
-  max-width: 100%; /* Ajusta según tus preferencias */
+  max-width: 100%; 
   margin: 0 auto;
 }
 
@@ -22,7 +22,7 @@ import HubComponent from './HubComponent.vue';
 }
 
 h1 {
-  font-size: 36px; /* Ajusta según tus preferencias */
-  color: #333; /* Ajusta según tus preferencias */
+  font-size: 36px; 
+  color: #333; 
 }
 </style>

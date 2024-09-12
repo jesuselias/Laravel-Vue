@@ -12,6 +12,12 @@ class RoomType extends Model
         'hotel_id',
         'name',
         'number',
+        'max_guests',
+        'max_rooms',
     ];
-
+    
+    protected $casts = [
+        'max_guests' => 'integer',
+        'max_rooms' => 'integer',
+    ];
 }

@@ -21,6 +21,7 @@ return new class extends Migration
             $table->unsignedInteger('meal_plan_id');
             $table->boolean('is_cancellable');
             $table->decimal('price', 10, 2);
+            $table->string('currency'); // Cambiamos decimal a string para el campo currency
             $table->date('check_in_date')->nullable();
             $table->date('check_out_date')->nullable();
             $table->timestamps();

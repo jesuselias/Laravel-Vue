@@ -11,11 +11,11 @@
         <input v-model="searchParams.checkIn" type="date" required>
         <label for="checkOut">Date to:</label>
         <input v-model="searchParams.checkOut" type="date" required>
-        <label for="guests">Número de huéspedes:</label>
+        <label for="guests">Maximum number of guests:</label>
         <input v-model.number="searchParams.numberOfGuests" type="number" min="1" max="10" required>
-        <label for="rooms">Número de habitaciones:</label>
+        <label for="rooms">Maximum number of rooms:</label>
         <input v-model.number="searchParams.numberOfRooms" type="number" min="1" max="10" required>
-        <label for="currency">Moneda:</label>
+        <label for="currency">Currency:</label>
         <select v-model="searchParams.currency">
           <option value="EUR">EUR</option>
           <option value="USD">USD</option>

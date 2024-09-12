@@ -14,8 +14,14 @@ class RoomRate extends Model
         'meal_plan_id',
         'is_cancellable',
         'price',
+        'currency',
         'check_in_date',
         'check_out_date',
+    ];
+
+    protected $casts = [
+        'price' => 'float',
+        'currency' => 'string', // Agregamos currency aquí
     ];
 
     public function hotel()

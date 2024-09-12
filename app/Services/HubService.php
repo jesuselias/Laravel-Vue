@@ -78,15 +78,16 @@ public function getHotelLegsData($hotelId, $checkIn, $checkOut, $guests, $rooms,
     // Obtener todos los planes de comida disponibles
     $mealPlans = MealPlan::pluck('id', 'name');
 
-    // Filtrar los tipos de habitación según la selección
+    // Filtrar los tipos de habitación según el número de huéspedes y habitaciones
     $filteredRoomTypes = $roomTypes->filter(function ($roomType) use ($guests, $rooms) {
-        return true; // Simplemente devuelve todos los resultados por ahora
+        return $roomType->max_guests >= $guests && $roomType->max_rooms >= $rooms;
     });
 
-    return $filteredRoomTypes->map(function ($roomType) use ($mealPlans, $checkIn, $checkOut) {
+    return $filteredRoomTypes->map(function ($roomType) use ($mealPlans, $checkIn, $checkOut, $currency) {
         $roomRates = RoomRate::where('room_id', $roomType->id)
             ->whereBetween('check_in_date', [$checkIn, $checkOut])
             ->whereBetween('check_out_date', [$checkIn, $checkOut])
+            ->where('currency', $currency)
             ->get();
             
 
