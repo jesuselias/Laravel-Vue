@@ -2,10 +2,10 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\SearchController;
-use App\Http\Controllers\Api\HotelsController;
-use App\Http\Controllers\Api\HubController;
-use App\Http\Controllers\Api\HotelLegsController;
+use App\Http\Controllers\SearchController;
+use App\Http\Controllers\HotelsController;
+use App\Http\Controllers\HubController;
+use App\Http\Controllers\HotelLegsController;
 
 use Laravel\Sanctum\Sanctum;
 
