@@ -6,17 +6,17 @@
     <form @submit.prevent="handleSubmit" class="search-form">
       <div class="form-group">
         <label for="hotelId">Hotel ID:</label>
-        <input v-model="searchParams.hotelId" type="text" placeholder="ID del hotel" required>
+        <input v-model="HubStore.getSearchParams.hotelId" type="text" placeholder="ID del hotel" required>
         <label for="checkIn">Date from:</label>
-        <input v-model="searchParams.checkIn" type="date" required>
+        <input v-model="HubStore.getSearchParams.checkIn" type="date" required>
         <label for="checkOut">Date to:</label>
-        <input v-model="searchParams.checkOut" type="date" required>
+        <input v-model="HubStore.getSearchParams.checkOut" type="date" required>
         <label for="guests">number of guests:</label>
-        <input v-model.number="searchParams.numberOfGuests" type="number" min="1" max="10" required>
+        <input v-model.number="HubStore.getSearchParams.numberOfGuests" type="number" min="1" max="10" required>
         <label for="rooms">number of rooms:</label>
-        <input v-model.number="searchParams.numberOfRooms" type="number" min="1" max="10" required>
+        <input v-model.number="HubStore.getSearchParams.numberOfRooms" type="number" min="1" max="10" required>
         <label for="currency">Currency:</label>
-        <select v-model="searchParams.currency">
+        <select v-model="HubStore.getSearchParams.currency">
           <option value="EUR">EUR</option>
           <option value="USD">USD</option>
           <option value="GBP">GBP</option>
@@ -26,7 +26,7 @@
         </div>
       </div>
     </form>
-    <div v-if="showResults" class="results-container">
+    <div v-if="HubStore.getShowResults" class="results-container">
       <h2>HUB Results</h2>
       <h2>Rooms:</h2>
       <table class="results-table">
@@ -48,9 +48,9 @@
         </tbody>
       </table>
       <div class="pagination-controls">
-        <button @click="prevPage" :disabled="currentPage === 1">&laquo;</button>
-        <span>{{ currentPage }} / {{ totalPages }}</span>
-        <button @click="nextPage" :disabled="currentPage === totalPages">&raquo;</button>
+        <button @click="prevPage" :disabled="HubStore.getCurrentPage === 1">&laquo;</button>
+        <span>{{ HubStore.getCurrentPage }} / {{ HubStore.getTotalPages }}</span>
+        <button @click="nextPage" :disabled="HubStore.getCurrentPage === HubStore.getTotalPages">&raquo;</button>
       </div>
     </div>
     <div v-else class="no-results">
@@ -62,60 +62,34 @@
 <script setup>
 import { ref, computed } from 'vue'
 import axios from 'axios'
+import { useStore } from '../stores/HubStore'
 
-const searchParams = ref({
-  hotelId: '',
-  checkIn: '',
-  checkOut: '',
-  numberOfGuests: 1,
-  numberOfRooms: 1,
-  currency: 'EUR'
-})
-
-const currentPage = ref(1)
-const itemsPerPage = ref(2)
-const totalPages = computed(() => Math.ceil(processedData.value.length / itemsPerPage.value))
-
-const paginatedResults = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return processedData.value.slice(start, end)
-})
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
-
-const processedData = ref([])
-
-const showResults = ref(false)
+const HubStore = useStore()
 
 const handleSubmit = async () => {
-  console.log('Formulario enviado:', searchParams.value)
+  console.log('Estado actual del store Hub:', HubStore.$state);
+  console.log('Formulario enviado:', HubStore.getSearchParams)
 
   try {
-    const response = await axios.post('http://localhost:8000/api/hub/search', searchParams.value)
+    const response = await axios.post('http://localhost:8000/api/hub/search', HubStore.getSearchParams)
     
     if (response.data.success) {
       console.log('Resultado de búsqueda:', response.data.data)
-      console.log('Resultado de búsqueda rooms:', response.data.data.rooms)
       
       // Procesa los datos
-      processedData.value = response.data.data.rooms.map(room => ({
+      const processedData = response.data.data.rooms.map(room => ({
         roomId: room.roomId,
         mealPlanId: room.rates[0]?.mealPlanId || 'N/A',
         price: room.rates[0]?.price?.toFixed(2) || 'N/A',
         isCancellable: room.rates[0]?.isCancellable === undefined ? 'N/A' : room.rates[0].isCancellable ? 'Yes' : 'No'
       }))
-      showResults.value = true
+      
+      HubStore.setSearchResults(processedData)
+      HubStore.setShowResults(true)
+      
+      // Actualice las páginas
+      const totalPages = Math.ceil(processedData.length / HubStore.getItemsPerPage)
+      HubStore.setTotalPages(totalPages)
     } else {
       throw new Error(`Error en la búsqueda: ${response.data.message}`)
     }
@@ -123,7 +97,20 @@ const handleSubmit = async () => {
     console.error('Error al procesar el resultado de búsqueda:', error.message)
     alert('Ocurrió un error al buscar. Por favor, inténtalo de nuevo.')
   }
+}
 
+const paginatedResults = computed(() => {
+  const start = (HubStore.getCurrentPage - 1) * HubStore.getItemsPerPage
+  const end = start + HubStore.getItemsPerPage
+  return HubStore.getResults.slice(start, end)
+})
+
+const prevPage = () => {
+  HubStore.setCurrentPage(HubStore.getCurrentPage - 1)
+}
+
+const nextPage = () => {
+  HubStore.setCurrentPage(HubStore.getCurrentPage + 1)
 }
 </script>
 
@@ -210,7 +197,6 @@ button[type="submit"]:hover {
   border-spacing: 0 2ch;
   border: 1px solid #000000;
   margin-left: 10%;
-
 }
 
 .results-table thead tr,

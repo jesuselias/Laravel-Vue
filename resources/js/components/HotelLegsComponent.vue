@@ -1,34 +1,34 @@
 <template>
-    <div id="hotel-legs-component">
-      <div class="title-container">
-        <h1>HOTELLEGS</h1>
-      </div>
-      <form @submit.prevent="handleSubmit" class="search-form">
-        <div class="form-group">
-          <label for="hotel">Hotel:</label>
-          <input v-model="searchParams.hotel" type="text" placeholder="ID del hotel" required>
-          <label for="checkInDate">Check-in Date:</label>
-          <input v-model="searchParams.checkInDate" type="date" required>
-          <label for="numberOfNights">Number of Nights:</label>
-          <input v-model.number="searchParams.numberOfNights" type="number" min="1" max="365" required>
-          <label for="guests">Number of Guests:</label>
-          <input v-model.number="searchParams.guests" type="number" min="1" max="10" required>
-          <label for="rooms">Maximum Number of Rooms:</label>
-          <input v-model.number="searchParams.rooms" type="number" min="1" max="10" required>
-          <label for="currency">Currency:</label>
-          <select v-model="searchParams.currency">
-            <option value="EUR">EUR</option>
-            <option value="USD">USD</option>
-            <option value="GBP">GBP</option>
-          </select>
-          <div class="form-button">
-            <button type="submit">Search</button>
-          </div>
+  <div id="hotel-legs-component">
+    <div class="title-container">
+      <h1>HOTELLEGS</h1>
+    </div>
+    <form @submit.prevent="handleSubmit" class="search-form">
+      <div class="form-group">
+        <label for="hotel">Hotel:</label>
+        <input v-model="store.getSearchParams.hotel" type="text" placeholder="ID del hotel" required>
+        <label for="checkInDate">Check-in Date:</label>
+        <input v-model="store.getSearchParams.checkInDate" type="date" required>
+        <label for="numberOfNights">Number of Nights:</label>
+        <input v-model.number="store.getSearchParams.numberOfNights" type="number" min="1" max="365" required>
+        <label for="guests">Number of Guests:</label>
+        <input v-model.number="store.getSearchParams.guests" type="number" min="1" max="10" required>
+        <label for="rooms">Maximum Number of Rooms:</label>
+        <input v-model.number="store.getSearchParams.rooms" type="number" min="1" max="10" required>
+        <label for="currency">Currency:</label>
+        <select v-model="store.getSearchParams.currency">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="GBP">GBP</option>
+        </select>
+        <div class="form-button">
+          <button type="submit">Search</button>
         </div>
-      </form>
-      <div v-if="showResults" class="results-container">
-        <h2>HOTEL LEGS RESULTS</h2>
-        <table class="results-table">
+      </div>
+    </form>
+    <div v-if="store.getShowResults" class="results-container">
+      <h2>HOTEL LEGS RESULTS</h2>
+      <table class="results-table">
         <thead>
           <tr>
             <th>Room ID</th>
@@ -38,7 +38,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in processedData" :key="index">
+          <tr v-for="(item, index) in paginatedResults" :key="index">
             <td>{{ item.room }}</td>
             <td>{{ item.meal }}</td>
             <td>{{ typeof item.price === 'string' ? item.price : item.price.toFixed(2) }}</td>
@@ -46,65 +46,31 @@
           </tr>
         </tbody>
       </table>
-        <div class="pagination-controls">
-          <button @click="prevPage" :disabled="currentPage === 1">&laquo;</button>
-          <span>{{ currentPage }} / {{ totalPages }}</span>
-          <button @click="nextPage" :disabled="currentPage === totalPages">&raquo;</button>
-        </div>
-      </div>
-      <div v-else class="no-results">
-        <p>No hay resultados disponibles.</p>
+      <div class="pagination-controls">
+        <button @click="prevPage" :disabled="store.getCurrentPage === 1">&laquo;</button>
+        <span>{{ store.getCurrentPage }} / {{ store.getTotalPages }}</span>
+        <button @click="nextPage" :disabled="store.getCurrentPage === store.getTotalPages">&raquo;</button>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, computed } from 'vue'
-    import axios from 'axios'
-  
-  const searchParams = ref({
-    hotel: '',
-    checkInDate: '',
-    numberOfNights: 1,
-    guests: 1,
-    rooms: 1,
-    currency: 'EUR'
-  })
-  
-  const currentPage = ref(1)
-  const itemsPerPage = ref(5)
-  const totalPages = computed(() => Math.ceil(processedData.value.length / itemsPerPage.value))
-  
-  const paginatedResults = computed(() => {
-  if (!Array.isArray(processedData.value)) {
-    return []
-  }
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return processedData.value.slice(start, end)
-})
-  
-  const prevPage = () => {
-    if (currentPage.value > 1) {
-      currentPage.value--
-    }
-  }
-  
-  const nextPage = () => {
-    if (currentPage.value < totalPages.value) {
-      currentPage.value++
-    }
-  }
-  
-  const processedData = ref([])
-  
-  const showResults = ref(false)
-  
-  const handleSubmit = async () => {
-  console.log('Formulario enviado:', searchParams.value)
+    <div v-else class="no-results">
+      <p>No hay resultados disponibles.</p>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import axios from 'axios'
+import { useStore } from '../stores/HotelLegsStore'
+
+const store = useStore()
+
+const handleSubmit = async () => {
+  console.log('Estado actual del store HotelLeg:', store.$state);
+  console.log('Formulario enviado:', store.getSearchParams)
 
   try {
-    const response = await axios.post('http://localhost:8000/api/hotel-legs/search', searchParams.value)
+    const response = await axios.post('http://localhost:8000/api/hotel-legs/search', store.getSearchParams)
     console.log("response", response)
 
     if (response.data.success) {
@@ -125,8 +91,9 @@
         });
       });
       
-      processedData.value = processedDataArray;
-      showResults.value = true
+      store.setProcessedData(processedDataArray)
+      store.setShowResults(true)
+      store.setTotalPages(Math.ceil(processedDataArray.length / store.getItemsPerPage))
     } else {
       throw new Error(`Error en la búsqueda: ${response.data.message}`)
     }
@@ -134,9 +101,22 @@
     console.error('Error al procesar el resultado de búsqueda:', error.message)
     alert('Ocurrió un error al buscar. Por favor, inténtalo de nuevo.')
   }
-
 }
-  </script>
+
+const paginatedResults = computed(() => {
+  const start = (store.getCurrentPage - 1) * store.getItemsPerPage
+  const end = start + store.getItemsPerPage
+  return store.getProcessedData.slice(start, end)
+})
+
+const prevPage = () => {
+  store.setCurrentPage(store.getCurrentPage - 1)
+}
+
+const nextPage = () => {
+  store.setCurrentPage(store.getCurrentPage + 1)
+}
+</script>
   
   <style scoped>
   #hotel-legs-component {

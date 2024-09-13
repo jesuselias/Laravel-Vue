@@ -1,38 +1,39 @@
 import { defineStore } from 'pinia'
 
-export const useStore = defineStore('hub', {
+export const useStore = defineStore('hotelLegs', {
   state: () => ({
-    results: [],
     searchParams: {
-      hotelId: '',
-      checkIn: '',
-      checkOut: '',
-      numberOfGuests: 1,
-      numberOfRooms: 1,
+      hotel: '',
+      checkInDate: '',
+      numberOfNights: 1,
+      guests: 1,
+      rooms: 1,
       currency: 'EUR'
     },
+    processedData: [],
     showResults: false,
     currentPage: 1,
-    itemsPerPage: 2,
+    itemsPerPage: 5,
     totalPages: 0
   }),
   getters: {
-    getResults: (state) => state.results,
     getSearchParams: (state) => state.searchParams,
+    getProcessedData: (state) => state.processedData,
     getShowResults: (state) => state.showResults,
     getCurrentPage: (state) => state.currentPage,
     getItemsPerPage: (state) => state.itemsPerPage,
     getTotalPages: (state) => state.totalPages
   },
   actions: {
-    setSearchResults(results) {
-      this.results = results
-    },
     setSearchParams(params) {
       this.searchParams = { ...this.searchParams, ...params }
     },
     setShowResults(value) {
-      this.showResults = value
+        this.showResults = value
+      },
+    setProcessedData(data) {
+      this.processedData = data
+      this.showResults = true
     },
     setCurrentPage(page) {
       this.currentPage = page
@@ -44,9 +45,8 @@ export const useStore = defineStore('hub', {
       this.totalPages = pages
     },
     clearResults() {
-      this.results = []
+      this.processedData = []
       this.showResults = false
     }
   }
 })
-

@@ -2,7 +2,7 @@
 import { createApp } from 'vue';
 import App from './components/App.vue';
 import HubComponent from './components/HubComponent.vue';
-import { useHubStore } from './stores/hubStore.js';
+import { useStore } from './stores/HubStore';
 
 const app = createApp({
     components: {
@@ -15,6 +15,11 @@ const app = createApp({
 });
 
 // Usa el store de una manera diferente
-app.config.globalProperties.$hubStore = useHubStore;
+app.config.globalProperties.$HubStore = useStore;
 
-app.mount('#app');
+// Importe Pinia dinámicamente
+import('pinia').then(({ createPinia }) => {
+    const pinia = createPinia();
+    app.use(pinia);
+    app.mount('#app');
+});
