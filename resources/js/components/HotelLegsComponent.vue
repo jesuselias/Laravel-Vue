@@ -13,7 +13,7 @@
         <input v-model.number="store.getSearchParams.numberOfNights" type="number" min="1" max="365" required>
         <label for="guests">Number of Guests:</label>
         <input v-model.number="store.getSearchParams.guests" type="number" min="1" max="10" required>
-        <label for="rooms">Maximum Number of Rooms:</label>
+        <label for="rooms">Number of Rooms:</label>
         <input v-model.number="store.getSearchParams.rooms" type="number" min="1" max="10" required>
         <label for="currency">Currency:</label>
         <select v-model="store.getSearchParams.currency">
