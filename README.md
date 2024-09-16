@@ -10,23 +10,78 @@
 Instrucciones de ejecución del proyecto:
 
 Backend (PHP/Laravel)
+
 Utilicé PHP como lenguaje de programación y Laravel como framework.
 Implementé pruebas unitarias utilizando PHPUnit.
 La base de datos utilizada fue PostgreSQL.
 Realicé varias migraciones para crear y llenar las tablas con los datos requeridos.
-Para llenar las tablas, utilicé php artisan tinker con comandos como $hotel = App\Models\Hotel::create(['name' => 'HotelLegs']);.
-El servidor se puede ejecutar con php artisan serve.
- 
+Para llenar las tablas, utilicé:
+
+```bash
+php artisan tinker 
+```
+ php artisan tinker 
+
+Despues por ejemplo para crear un Hote:
+
+```bash
+$hotel = App\Models\Hotel::create(['name' => 'HotelLegs']);
+```
+
+Para ejecutar el servidor:
+
+```bash
+php artisan serve
+```
+
 Frontend (Vue.js/Pinia)
+
 Desarrollé la interfaz de usuario utilizando Vue.js.
 Implementé Pinia como gestor de estado.
-Para ejecutar el frontend, se utiliza el comando npm run dev, accediendo a través de http://localhost:8000/.
+Para ejecutar el frontend, se utiliza el comando:
+
+```bash
+npm run dev
+```
+
+
+acceder a http://localhost:8000/.
  
 Pruebas Unitarias y Automatización
-En el backend, las pruebas unitarias se pueden ejecutar con npm run testphpunit o ./vendor/bin/phpunit.
 
-En el frontend, implementé pruebas unitarias con Jest para ejecutar npm run testjest. 
+En el backend, las pruebas unitarias se pueden ejecutar con:
 
-y agregue Cypress para automatización de pruebas:
-Los comandos para ejecutar Cypress son npm run cypress:run y npm run cypress:open.
+```bash
+npm run testphpunit
+```
+
+o
+
+```bash
+./vendor/bin/phpunit
+```
+
+En el frontend, implementé pruebas unitarias con Jest para ejecutar:
+
+```bash
+npm run testjest
+```
+
+o
+
+```bash
+npx jest
+```
+
+y agregue Cypress para automatización de pruebas. 
+
+Los comandos para ejecutar Cypress son:
+
+```bash
+npm run cypress:run 
+```
+
+```bash
+npm run cypress:open
+```
  
